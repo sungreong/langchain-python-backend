@@ -9,6 +9,8 @@ from transformers import TextIteratorStreamer
 
 from threading import Thread
 from langchain_core.language_models import llms
+from typing import List, Optional
+from ...utils.openai_types import ChatMessage, Function, Tool
 
 
 def generate(llm: HuggingFacePipeline, query: str):
@@ -23,7 +25,16 @@ def start_generation(llm: HuggingFacePipeline, query: str):
     return thread
 
 
-def generate_stream(model, completion_id, prompt_list: list, llm: HuggingFacePipeline, streamer: TextIteratorStreamer):
+def generate_stream(
+    model,
+    completion_id,
+    prompt_list: list,
+    llm: HuggingFacePipeline,
+    streamer: TextIteratorStreamer,
+    functions: Optional[List[Function]] = None,
+    tools: Optional[List[Tool]] = None,
+    stop=[],
+):
     prompt_tokens = 0
     completion_tokens = 0
     total_tokens = 0
@@ -36,7 +47,12 @@ def generate_stream(model, completion_id, prompt_list: list, llm: HuggingFacePip
         list_prompt_tokens = llm.pipeline.tokenizer.encode(prompt)
         prompt_tokens += len(list_prompt_tokens)
         thread = start_generation(llm, prompt)
+        total_text = ""
         for output_text in streamer:
+            total_text += output_text
+            print(total_text, stop)
+            if any([s in total_text for s in stop]):
+                break
             list_completion_tokens = llm.pipeline.tokenizer.encode(output_text)
             completion_tokens += len(list_completion_tokens)
             total_tokens += len(list_prompt_tokens + list_completion_tokens)
@@ -89,9 +105,6 @@ from ...utils.openai_types import (
     ChatCompletionStreamResponse,
 )
 
-from typing import List, Optional
-from ...utils.openai_types import ChatMessage, Function, Tool
-
 
 def generate_chat_stream(
     messages,
@@ -102,6 +115,7 @@ def generate_chat_stream(
     streamer: TextIteratorStreamer,
     functions: Optional[List[Function]] = None,
     tools: Optional[List[Tool]] = None,
+    stop=[],
 ):
     # TODO: Implement functions and tools
     prompt_tokens = 0
@@ -116,8 +130,12 @@ def generate_chat_stream(
         list_prompt_tokens = llm.pipeline.tokenizer.encode(prompt)
         prompt_tokens += len(list_prompt_tokens)
         thread = start_generation(llm, prompt)
+        total_text = ""
         for output_text in streamer:
+            total_text += output_text
             print(output_text, end="", flush=True)
+            if any([s in total_text for s in stop]):
+                break
             list_completion_tokens = llm.pipeline.tokenizer.encode(output_text)
             completion_tokens += len(list_completion_tokens)
             total_tokens += len(list_prompt_tokens + list_completion_tokens)

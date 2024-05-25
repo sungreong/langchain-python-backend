@@ -96,6 +96,7 @@ async def chat_endpoint(chat_input: ChatInput):
             prompt_list=[prompt],
             llm=llm,
             streamer=streamer,
+            stop=chat_input["stop"],
         )
 
         def get_response_stream():
@@ -133,6 +134,7 @@ async def generate_text(completion_input: CompletionCreateParams):
             prompt_list=completion_input["prompt"],
             llm=llm,
             streamer=streamer,
+            stop=completion_input["stop"],
         )
 
         def get_response_stream():

@@ -17,11 +17,12 @@ if __name__ == "__main__":
         openai_proxy="",  # Endpoint for generating responses
         temperature=0.0,  # Deterministic output,
         max_tokens=3000,  # Maximum tokens to generate
-        stream=False,
+        stream=True,
         # request_timeout=120,  # Timeout for requests
         frequency_penalty=0.0,
         # presence_penalty=0.8,
         top_p=1.0,
+        streaming=True,
         # best_of=1,
         # n=1,
         # # 차이가 없음
@@ -57,7 +58,6 @@ if __name__ == "__main__":
         cursor.execute(query)
     except Exception as e:
         print(e)
-
     df = pd.read_csv("./../../data/Pincode_30052019.csv", encoding="ISO-8859-1")
     df.columns = [
         "CircleName",
@@ -73,18 +73,29 @@ if __name__ == "__main__":
 
     # Import the csv into database
     try:
-        df.to_sql("Postal_Offices", conn, if_exists="fail", index=False)
+        print(df.head())
+        df.to_sql("Postal_Offices", conn, if_exists="replace", index=False)
     except Exception as e:
         print(e)
-    finally:
-        conn.close()
-
+    print(
+        cursor.execute(
+            'SELECT "OfficeName", "District", "StateName" FROM "Postal_Offices" WHERE "Pincode" = 515004 LIMIT 5;'
+        ).fetchall()
+    )
     db = SQLDatabase.from_uri("sqlite:///../../data/pincode.db")
     chain = create_sql_query_chain(llm, db)
-    response = chain.invoke({"question": "What is address of pincode 800020"})
+    response = chain.invoke({"question": "What is address of pincode 515004"})
     print(response)
     # Use regular expression to extract the SQL query
-    sql_query = re.search(r"SQLQuery: (.+)SQLResult", response).group(1).strip()
-    print(sql_query)
+    pattern = r"SQLQuery: (\b(?:SELECT|INSERT|UPDATE|DELETE|WITH)\b[^;]+;)"
+
+    # Searching for the pattern in the text
+    match = re.search(pattern, response)
+    if match:
+        sql_query = match.group(1)
+        print(sql_query)
+    else:
+        print("No SQL query found.")
     cursor.execute(sql_query)
     print(cursor.fetchall())
+    conn.close()

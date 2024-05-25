@@ -3,6 +3,7 @@ from transformers import pipeline, TextIteratorStreamer
 from ...utils.openai_completion_types import CompletionCreateParams
 from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer, pipeline
 
+
 models = {}  # Dictionary to store model instances
 
 
@@ -18,8 +19,9 @@ def load_model(model_id, hf_auth):
     print("Loading model", model_id)
     model_config = AutoConfig.from_pretrained(
         model_id,
-        use_auth_token=hf_auth,
+        token=hf_auth,
         trust_remote_code=True,
+        # cache_dir=cache_dir,
     )
     print("Model config loaded")
     model = AutoModelForCausalLM.from_pretrained(
@@ -27,14 +29,16 @@ def load_model(model_id, hf_auth):
         config=model_config,
         quantization_config=None,  # Define `bnb_config` if needed
         device_map="auto",
-        use_auth_token=hf_auth,
-        # cache_dir="./model_list",
+        token=hf_auth,
+        trust_remote_code=True,
+        # cache_dir=cache_dir,
     )
     print("Model loaded")
     tokenizer = AutoTokenizer.from_pretrained(
         model_id,
-        use_auth_token=hf_auth,
-        # cache_dir="./model_list",
+        token=hf_auth,
+        trust_remote_code=True,
+        # cache_dir=cache_dir,
     )
     print("Tokenizer loaded")
     models[model_id] = dict(model=model, tokenizer=tokenizer)
@@ -53,7 +57,7 @@ def define_pipeline(request: CompletionCreateParams):
     #     raise HTTPException(status_code=404, detail="Model not loaded")
     if request["stream"]:
         print("use streamer...")
-        streamer = TextIteratorStreamer(model_info["tokenizer"], skip_prompt=True, timeout=30.0)
+        streamer = TextIteratorStreamer(model_info["tokenizer"], skip_prompt=True, timeout=None)
     else:
         streamer = None
     print("pipeline", request)

@@ -3,6 +3,7 @@ import uuid
 from typing import Dict, List, Literal, Optional, Union
 
 from pydantic import BaseModel, Field, validator
+from openai.types.chat import ChatCompletionMessage
 
 
 class FunctionCall(BaseModel):
@@ -66,31 +67,23 @@ class ChatMessage(BaseModel):
             raise ValueError(f"Unsupported role: {self.role}")
 
 
-class CompletionInput(BaseModel):
-    model: str
-    prompt: Union[str, List[str], List[int], List[List[int]]]
-    best_of: Optional[int] = None
-    echo: Optional[bool] = None
-    frequency_penalty: Optional[float] = None
-    logit_bias: Optional[Dict[str, int]] = None
-    logprobs: Optional[int] = None
-    max_tokens: Optional[int] = None
-    n: Optional[int] = None
-    presence_penalty: Optional[float] = None
-    seed: Optional[int] = None
-    stop: Optional[Union[str, List[str]]] = None
-    stream: Optional[bool] = None
-    suffix: Optional[str] = None
-    temperature: Optional[float] = None
-    top_p: Optional[float] = None
-
-
 class ChatInput(BaseModel):
+    model: str
     messages: List[ChatMessage]
     functions: Optional[List[Function]] = None
     tools: Optional[List[Tool]] = None
     temperature: float = 0.9
     stream: bool = False
+    ## model params
+    logit_bias: Optional[Dict[str, float]] = None
+    max_tokens: Optional[int] = 512
+    seed: Optional[int] = None
+    stop: Optional[Union[str, List[str]]] = Field(default_factory=list)
+    presence_penalty: Optional[float] = 0.0
+    frequency_penalty: Optional[float] = 0.0
+    top_p: Optional[float] = 1.0
+    user: Optional[str] = None
+    streaming: Optional[bool] = False
 
 
 class Choice(BaseModel):

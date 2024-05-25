@@ -1,5 +1,11 @@
 
 
+# write .env file
+
+```
+HF_AUTH=hf-xxx # 입력
+HF_HUB_CACHE= # 경로 입력 (원하는 경로에 입력)
+```
 
 
 # fastapi 실행
